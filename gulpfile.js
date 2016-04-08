@@ -86,7 +86,7 @@ var gulp = require('gulp'),//本地安装gulp所用到的地方
 //        //.pipe(notify({ message: 'JS合并压缩' }))
 //        .pipe(reload({stream: true}));
 //});
-//// 清空文件夹
+// 清空文件夹
 //gulp.task('clean', function() {
 //    gulp.src(['./dist/css', './dist/js', './dist/images'], {read: false})
 //        .pipe(clean());
