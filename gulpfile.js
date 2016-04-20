@@ -1,113 +1,86 @@
+//// 引入 gulp
+var gulp = require('gulp');
+// 引入组件  
+var sass = require('gulp-Sass'),//编译Sass
+    minifycss = require('gulp-minify-css'),//css压缩 
+    jshint = require('gulp-jshint'),//js检测
+    uglify = require('gulp-uglify'),//js压缩
+    imagemin = require('gulp-imagemin'),//图片压缩
+    rename = require('gulp-rename'),//文件更名
+    clean = require('gulp-clean'),//清空文件夹
+    concat = require('gulp-concat'),//文件合并
+    notify = require('gulp-notify'),//提示信息
+    cache = require('gulp-cache'),//图片快取，只有更改过得图片会进行压缩
+    livereload = require('gulp-livereload');//服务器控制客户端同步刷新（需配合chrome插件LiveReload及tiny-lr）
+    server = livereload(),
+    port = 35729,
 
-/* *****组件安装*****
-* npm install gulp-sass gulp-uglify gulp-compass gulp-sourcemaps gulp-imagemin gulp-minify-css gulp-make-css-url-version gulp-rev-append gulp-concat gulp-rename gulp-jshint gulp-clean
-* 
-* *****项目结构*****
-* gulp(项目名称)
-*    |–.git 通过git管理项目会生成这个文件夹
-*    |–node_modules 组件目录
-*    |–dist 发布环境
-*        |–css 样式文件(style.css style.min.css)
-*        |–images 图片文件(压缩图片)
-*        |–js js文件(main.js main.min.js)
-*        |–index.html 静态文件(压缩html)
-*    |–dev 生产环境
-*        |–sass sass文件
-*        |–images 图片文件
-*        |–js js文件
-*        |–index.html 静态文件
-*    |–config.rb Compass配置文件
-*    |-package.json 项目信息
-*    |–gulpfile.js gulp任务文件
-**/
+// 样式sass
+gulp.task('sass', function() {  
+  return gulp.src('./dev/sass/*.scss')
+    .pipe(sass({ style: 'expanded' }))//编译Sass
+    // .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
+    .pipe(concat('min.css'))
+    .pipe(gulp.dest('./dist/css'))
+    .pipe(rename({suffix: '.min'}))//修改文件更名
+    .pipe(minifycss())//css压缩
+    .pipe(gulp.dest('./dist/css/'))
+    .pipe(notify({ message: '样式任务完成' }));
 
-//导入工具包 require('node_modules里对应模块')
-var gulp = require('gulp'),//本地安装gulp所用到的地方
-    less = require('gulp-less') //less编辑
-//    compass = require('gulp-compass'),          // compass编译Sass, 生成雪碧图
-//    sass = require('gulp-sass'),                // sass编译
-    sourcemaps = require('gulp-sourcemaps'),    // sass地图
-//    rename = require('gulp-rename'),            // 重命名文件
-//    jshint = require('gulp-jshint'),            // JS语法检测
-//    uglify = require('gulp-uglify'),            // JS丑化
-//    concat = require('gulp-concat'),            // JS拼接
-//    imagemin = require('gulp-imagemin'),        // 图片压缩
-//cssmin = require('gulp-minify-css'),     // 压缩CSS
-//    cssver = require('gulp-make-css-url-version'),    // css文件引用URL加版本号
-//    rev = require('gulp-rev-append'),           // html添加版本号
-// 路径变量
-// var path = {
-//     // 开发环境
-//     dev: {
-//         html: './dev',
-//         js: './dev/js',
-//         sass: './dev/sass',
-//         css: './dev/css',
-//         images: './dev/images' 
-//     },
-//     // 发布环境
-//     dist: {
-//         html: './dist',
-//         js: './dist/js',
-//         css: './dist/css',
-//         images: './dist/images' 
-//     }
-// };    
-// 创建Compass任务，编译Sass生成雪碧图
-//gulp.task('compass', function() {
-//    gulp.src('./dev/sass/*.scss')
-//        .pipe(compass({
-//            config_file: './config.rb',    // 配置文件
-//            css: './dev/css',             // 编译路径
-//            sass: './dev/sass'        　 // sass路径
-//            image: './dev/images'         // 图片路径，用于生成雪碧图
-//        }))
-//        .pipe(cssver())                    // CSS文件引用URl加版本号
-//        .pipe(minifycss())                 // 压缩CSS
-//        .pipe(gulp.dest('./dist/css'))    // 发布到线上版本
-//        .pipe(reload({stream: true}));
-//});
-//// 图片压缩
-//gulp.task('image', function() {
-//    gulp.src('./dev/images/*.*')
-//        .pipe(cache(imagemin()))
-//        .pipe(reload({stream: true}))
-//        .pipe(gulp.dest('./dis/images'));
-//        //.pipe(notify({ message: '图片压缩'}));
-//});
-// 合并压缩JS文件
-//gulp.task('script', function() {
-//    gulp.src('./dev/js/*.js')
-//        .pipe(concat('all.js'))            // 合并
-//        .pipe(gulp.dest('./dist/js'))
-//        .pipe(rename('all.min.js'))        // 重命名
-//        .pipe(uglify())                    // 压缩
-//        .pipe(gulp.dest('./dist/js'))
-//        //.pipe(notify({ message: 'JS合并压缩' }))
-//        .pipe(reload({stream: true}));
-//});
-// 清空文件夹
-//gulp.task('clean', function() {
-//    gulp.src(['./dist/css', './dist/js', './dist/images'], {read: false})
-//        .pipe(clean());
-//});
-// 默认任务
-gulp.task('testLess',function(){
-    gulp.src('dev/less/*.less')
-    //gulp.src(['src/less/index.less','src/less/detail.less']) //多个文件以数组形式传入
-    //编译src目录下的所有less文件
-    //除了reset.less和test.less（**匹配src/less的0个或多个子文件夹）
-    //gulp.src(['src/less/*.less', '!src/less/**/{reset,test}.less'])
-        .pipe(sourcemaps.init())
-        .pipe(less())
-        pipe(sourcemaps.write())
-//    .pipe(cssmin({compatibility: 'ie7'}))//兼容IE7及以下需设置compatibility属性 .pipe(cssmin({compatibility: 'ie7'}))
-    .pipe(gulp.dest('dist/css'));
 });
-gulp.task('default', ['testLess'],function() {
-    gulp.start('testLess');
+// 脚本JavaScript
+gulp.task('scripts', function() {  
+  return gulp.src('./dev/js/*.js')
+    // .pipe(jshint('.jshintrc'))
+    .pipe(jshint.reporter('default'))
+    .pipe(concat('main.js'))
+    .pipe(gulp.dest('./dist/js/'))
+    .pipe(rename({suffix: '.min'}))
+    .pipe(uglify())
+    .pipe(gulp.dest('./dist/js/'))
+    .pipe(notify({ message: '脚本任务完成' }));
+});
+//图片压缩
+gulp.task('images', function() {  
+  return gulp.src('./dev/images/*.{png,jpg,gif,ico}')
+    .pipe(imagemin({ optimizationLevel: 3, progressive: true, interlaced: true }))
+    .pipe(gulp.dest('./dist/images/'))
+    .pipe(notify({ message: '图片压缩完成' }));
 });
 
-gulp.task('testWatch',function(){
-    gulp.watch('dev/less/*.less',['testLess']);
+//清理
+gulp.task('clean', function() {  
+  return gulp.src(['./dist/css/', './dist/js/', './dist/images/'], {read: false})
+    .pipe(clean());
 });
+
+//预设任务
+gulp.task('default', ['clean'], function() {  
+    // gulp.start('less', 'scripts', 'images');
+    gulp.start('sass', 'scripts', 'images');
+});
+
+// 看守
+gulp.task('watch', function() {
+
+  // 看守所有.scss档
+  gulp.watch('./dev/sass/*.scss', ['sass']);
+
+  // 看守所有.js档
+  gulp.watch('./dev/js/*.js', ['scripts']);
+
+  // 看守所有图片档
+  gulp.watch('./dev/images/*.{png,jpg,gif,ico}', ['images']);
+
+  // 建立即时重整伺服器
+  var server = livereload();
+
+  // 看守所有位在 dist/  目录下的档案，一旦有更动，便进行重整
+  gulp.watch(['./dist/**']).on('change', function(file) {
+    server.changed(file.path);
+  });
+
+});
+
+
+
