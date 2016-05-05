@@ -1,0 +1,31 @@
+<html>
+<head><title>IntSig BCR Test </title></head>
+<body>
+<h2></h2><hr>
+<form method='POST' enctype='multipart/form-data'
+action='http://imgs-sandbox.intsig.net/icr/recognize_id_card?user=xxx&pass=xxx& encoding=gb2312&head_portrait=1&crop_image=1'>
+Please specify a JPG file <br>
+<input type=file name=upfile size=20><br><br> <input id="Upload" type=submit value='Upload'> </form><hr> <div id="uploadResult"></div> 
+<script src="http://apps.bdimg.com/libs/jquery/1.11.1/jquery.js"></script>
+<script>
+	$(document).ready(function(){
+			var settings = {
+  "async": true,
+  "crossDomain": true,
+  "url": "http://imgs-sandbox.intsig.net/icr/recognize_id_card?user=xxx&pass=xxx&encoding=gb231%202&head_portrait=1&crop_image=1",
+  "method": "POST",
+  "headers": {
+    "cache-control": "no-cache",
+    "postman-token": "4e78f27a-f0c0-0ba2-3704-2589450d30f0"
+  }
+}
+
+$.ajax(settings).done(function (response) {
+  console.log(response);
+});
+			
+
+	});
+</script>
+</body>
+</html>
