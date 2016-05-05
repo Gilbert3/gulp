@@ -1,4 +1,20 @@
 $base:#fff;
+$base:#333;
+$base:#666;
+$base:#888;
+
 .bock{
 	color:$base;
+}
+body{
+	background-color:#base;
+}
+.main{
+	width:200px;
+	height:200px;
+	border:1px solid $base;
+}
+div{
+	width:300px;
+	height:90px;
 }

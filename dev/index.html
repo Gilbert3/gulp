@@ -1,33 +1,250 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-	<meta charset="UTF-8">
-	<title>insertBefore</title>
-	<script type="text/javascript" src="js/base.js"></script>
-	<link rel="stylesheet" type="text/css" href="./css/main.css?rev=@@hash">
-	<script>
-	window.onload=function(){
-		var oUl= document.getElementById("ul1");
-		var oBtn= document.getElementById("btn");
-		var oTxt= document.getElementById("txt1");
-		oBtn.onclick=function(){
-			var oLi=document.createElement("li");
-			var aLi=oUl.getElementsByTagName("li");
-			oLi.innerHTML=oTxt.value;
-			if(aLi.length>2){
-				oUl.insertBefore(oLi, aLi[2]);
-			}else{
-				oUl.appendChild(oLi);
-			}
-		};
-	};
-</script>
+<title>合合信息证件识别演示</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 </head>
 <body>
-	<input type="text" id="txt1">
-	<input id="btn" type="button" value="创建LI">
-	<ul id="ul1">
-		
-	</ul>
+
+<h2>合合信息证件识别演示</h2>
+
+上传证件照片：<br><br>
+<input id="btn_file" type="file" /><br>
+<input id="upfile" name="upfile" type="hidden"/>
+<br>
+先切边后识别 <input id="recognize_mode" type="checkbox"/><br>
+<br>
+<input id="submit" type="submit" style="width:100px;height:40px" value='上传识别'/><br>
+
+<br>
+证件图像：
+<div id="canvas_container">
+<canvas id="test_canvas" height="20"></canvas>
+</div>
+
+<br>识别结果：<br>
+姓名：<input id="id_name" value=''/><br>
+性别：<input id="id_sex" value=''/><br>
+民族：<input id="id_people" value=''/><br>
+出生：<input id="id_birthday" value=''/><br>
+住址：<input id="id_address" value='' size="40"/><br>
+公民身份号码：<input id="id_number" value=''/><br>
+签发机关：<input id="id_issue_authority" value=''/><br>
+有效期限：<input id="id_validity" value=''/><br>
+
+<br>
+号码图像：<br>
+<img id="img_id_number"/>
+<br />
+切边图像：<br>
+<img id="img_cropped_image"/>
+<br>
+头像：
+<br>
+<img id="img_head_portrait"/>
+
+<br><br>
+
+<img id="img_source" style="display:none"/><br>
+
+<script type="text/javascript">
+var upfile = document.getElementById('upfile'),
+	size = document.getElementById('size'),
+	btn_file = document.getElementById('btn_file'),
+	img_source = document.getElementById('img_source'),
+	test_canvas = document.getElementById('test_canvas'),
+	canvas_container = document.getElementById('canvas_container'),
+	btn_submit = document.getElementById('submit'),
+	context = test_canvas.getContext('2d'),
+	img_cropped_image = document.getElementById('img_cropped_image'),
+	img_id_number = document.getElementById('img_id_number'),
+	img_head_portrait = document.getElementById('img_head_portrait'),
+	id_name = document.getElementById('id_name'),
+	id_sex = document.getElementById('id_sex'),
+	id_people = document.getElementById('id_people'),
+	id_birthday = document.getElementById('id_birthday'),
+	id_number = document.getElementById('id_number'),
+	id_address = document.getElementById('id_address'),
+	id_issue_authority = document.getElementById('id_issue_authority'),
+	id_validity = document.getElementById('id_validity');
+	recognize_mode = document.getElementById('recognize_mode');
+
+
+var ajax_uploading;
+btn_submit.onclick = function() {
+	var img_data = img_source.src;
+
+	if (ajax_uploading) {
+		return;
+	}
+
+	if (img_data) {
+		ajax_uploading = true;
+		id_name.value = id_sex.value = id_people.value = id_birthday.value =
+		id_number.value = id_address.value = id_issue_authority.value = id_validity.value = '';
+		img_cropped_image.src = img_id_number.src = img_head_portrait.src = '';
+
+		img_data = atob(img_data.substring(img_data.indexOf('base64,') + 7));
+    var recognize_mode_str = '';
+    if (recognize_mode.checked) {
+      recognize_mode_str = '&recognize_mode=1';
+    }
+
+		ajax('http://imgs-sandbox.intsig.net/icr/recognize_id_card?user=xxx&pass=xxx& encoding=gb2312' + recognize_mode_str, img_data, function(response) {
+			ajax_uploading = false;
+			var json = JSON.parse(response);
+			if (json.cropped_image) {
+				img_cropped_image.src = 'data:image/jpeg;base64,' + json.cropped_image;
+			}
+			if (json.id_number_image) {
+				img_id_number.src = 'data:image/jpeg;base64,' + json.id_number_image;
+			}
+			if (json.head_portrait && json.head_portrait.image) {
+				img_head_portrait.src = 'data:image/jpeg;base64,' + json.head_portrait.image;
+			}
+			if (json.name) {
+				id_name.value = json.name;
+			}
+			if (json.sex) {
+				id_sex.value = json.sex;
+			}
+			if (json.people) {
+				id_people.value = json.people;
+			}
+			if (json.birthday) {
+				id_birthday.value = json.birthday;
+			}
+			if (json.id_number) {
+				id_number.value = json.id_number;
+			}
+			if (json.address) {
+				id_address.value = json.address;
+			}
+			if (json.issue_authority) {
+				id_issue_authority.value = json.issue_authority;
+			}
+			if (json.validity) {
+				id_validity.value = json.validity;
+			}
+		});
+	}
+	else
+	{
+		alert('请选择上传文件');
+		return;
+	}
+};
+
+btn_file.onchange = function () {
+	try {
+		var file = btn_file.files[0],
+		reader = new FileReader(),
+		match, ext;
+
+		if (!file) {
+			return;
+		}
+
+		if (match = file.name.match(/\.jpg$|\.png$|\.jpeg$/i)) {
+			ext = match[0].substr(1).toLowerCase();
+
+			if (ext == 'jpg') {
+				ext = 'jpeg';
+			}
+		} else {
+			alert('目前仅支持JPG格式的图像文件');
+			return;
+		}
+
+		reader.readAsDataURL(file);
+
+		reader.onerror = function() {
+			alert('file [' + file.name + '] read failed');
+		}
+
+		var img_width, img_height;
+
+		reader.onload = function() {
+			img_source.src = this.result;
+
+			img_source.onload = function() {
+				img_width = img_source.width;
+				img_height = img_source.height;
+
+				//log('filesize before compress : ' + file.size);
+
+				var sx, sy, swidth, sheight, x, y, width, height;
+
+				// context.clearRect(0, 0, test_canvas.width, test_canvas.height);
+
+				test_canvas.width = img_width * 0.2;
+				test_canvas.height = img_height * 0.2;
+
+				// console.log('Image width : ' + test_canvas.width + '. Image height : ' + test_canvas.height + '.');
+
+				context.drawImage(img_source,
+						sx = 0, sy = 0,
+						swidth = img_width, sheight = img_height,
+						x = 0, y = 0,
+						test_canvas.width, test_canvas.height);
+
+				var src = test_canvas.toDataURL(ext),
+					size = atob(src.substring(src.indexOf('base64,') + 7)).length;
+
+				//log('filesize after compress : ' + size);
+
+				upfile.value = src;
+			}
+		};
+	} catch (e) {
+		alert(e);
+	}
+}
+
+function log(str) {
+	var div = document.createElement('div');
+	div.innerHTML = str;
+	document.body.appendChild(div);
+}
+
+function ajax(url, post, complete) {
+	var xhr = new XMLHttpRequest;
+
+	if (typeof post == 'function') {
+		complete = post;
+		post = null;
+	}
+
+	typeof complete == 'function' ? 0 : complete = function() {};
+
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState == 4 && xhr.status == 200) {
+			complete(xhr.responseText, xhr);
+		}
+	};
+
+	if (post) {
+		xhr.open('POST', url, true);
+		xhr.setRequestHeader('Content-type', 'application/octet-stream');
+		if (!XMLHttpRequest.prototype.sendAsBinary) {
+	  		XMLHttpRequest.prototype.sendAsBinary = function(datastr) {
+			    function byteValue(x) {
+			      return x.charCodeAt(0) & 0xff;
+			    }
+			    var ords = Array.prototype.map.call(datastr, byteValue);
+			    var ui8a = new Uint8Array(ords);
+			    this.send(ui8a.buffer);
+			}
+		}
+		xhr.sendAsBinary(post);
+	} else {
+		xhr.open('GET', url);
+		xhr.send();
+	}
+}
+
+</script>
 </body>
 </html>

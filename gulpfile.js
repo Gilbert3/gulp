@@ -1,7 +1,7 @@
 //// 引入 gulp
 var gulp = require('gulp');
 // 引入组件  
-var sass = require('gulp-Sass'),//编译Sass
+var less = require('gulp-less'),//编译less
     minifycss = require('gulp-minify-css'),//css压缩 
     jshint = require('gulp-jshint'),//js检测
     uglify = require('gulp-uglify'),//js压缩
@@ -15,19 +15,20 @@ var sass = require('gulp-Sass'),//编译Sass
     server = livereload(),
     port = 35729,
 
-// 样式sass
-gulp.task('sass', function() {  
-  return gulp.src('./dev/sass/*.scss')
-    .pipe(sass({ style: 'expanded' }))//编译Sass
+// 样式less
+gulp.task('less', function() {  
+  return gulp.src('./dev/less/*.less')
+    .pipe(less())//编译Sass
     // .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
-    .pipe(concat('min.css'))
-    .pipe(gulp.dest('./dist/css'))
-    .pipe(rename({suffix: '.min'}))//修改文件更名
-    .pipe(minifycss())//css压缩
+    // .pipe(concat('min.css'))
+    // .pipe(gulp.dest('./dist/css'))
+    // .pipe(rename({suffix: '.min'}))//修改文件更名
+    // .pipe(minifycss())//css压缩
     .pipe(gulp.dest('./dist/css/'))
     .pipe(notify({ message: '样式任务完成' }));
 
 });
+
 // 脚本JavaScript
 gulp.task('scripts', function() {  
   return gulp.src('./dev/js/*.js')
@@ -40,6 +41,7 @@ gulp.task('scripts', function() {
     .pipe(gulp.dest('./dist/js/'))
     .pipe(notify({ message: '脚本任务完成' }));
 });
+
 //图片压缩
 gulp.task('images', function() {  
   return gulp.src('./dev/images/*.{png,jpg,gif,ico}')
@@ -50,21 +52,21 @@ gulp.task('images', function() {
 
 //清理
 gulp.task('clean', function() {  
-  return gulp.src(['./dist/css/', './dist/js/', './dist/images/'], {read: false})
+  return gulp.src(['./dist/css/'], {read: false})
     .pipe(clean());
 });
 
 //预设任务
 gulp.task('default', ['clean'], function() {  
     // gulp.start('less', 'scripts', 'images');
-    gulp.start('sass', 'scripts', 'images');
+    gulp.start('less');
 });
 
-// 看守
+// 看手
 gulp.task('watch', function() {
-
-  // 看守所有.scss档
-  gulp.watch('./dev/sass/*.scss', ['sass']);
+    
+  // 看守所有.less档
+  gulp.watch('./dev/less/*.less', ['less']);
 
   // 看守所有.js档
   gulp.watch('./dev/js/*.js', ['scripts']);
@@ -75,8 +77,8 @@ gulp.task('watch', function() {
   // 建立即时重整伺服器
   var server = livereload();
 
-  // 看守所有位在 dist/  目录下的档案，一旦有更动，便进行重整
-  gulp.watch(['./dist/**']).on('change', function(file) {
+  // // 看守所有位在 dist/  目录下的档案，一旦有更动，便进行重整
+  gulp.watch(['./dist/**']).on('clean', function(file) {
     server.changed(file.path);
   });
 
